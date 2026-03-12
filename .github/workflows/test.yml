@@ -29,3 +29,23 @@ jobs:
       - name: Test with pytest
         run: |
           pytest
+
+  test-jax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout git repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: |
+          pip install ".[jax]"
+          pip install pytest
+
+      - name: Test with pytest
+        run: |
+          pytest ckmutil/test_jax.py

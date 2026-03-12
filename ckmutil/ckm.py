@@ -1,7 +1,23 @@
 """Functions needed for the CKM quark mixing matrix."""
 
-from numpy import exp, sqrt, angle as phase, cos, sin, tan, arctan, arcsin
 import numpy as np
+from ckmutil._ckm_impl import (
+    _ckm_standard,
+    _ckm_wolfenstein,
+    _ckm_tree,
+    _ckm_beta_gamma,
+    _gamma_to_delta,
+    _beta_gamma_to_delta,
+    _tree_to_standard,
+    _standard_to_tree,
+    _beta_gamma_to_standard,
+    _standard_to_beta_gamma,
+    _wolfenstein_to_standard,
+    _standard_to_wolfenstein,
+    _tree_to_wolfenstein,
+    _wolfenstein_to_tree,
+)
+
 
 def ckm_standard(t12, t13, t23, delta):
     r"""CKM matrix in the standard parametrization and standard phase
@@ -19,24 +35,8 @@ def ckm_standard(t12, t13, t23, delta):
     - `v`: CKM matrix in the standard parametrization and standard phase
         convention
     """
-    c12 = cos(t12)
-    c13 = cos(t13)
-    c23 = cos(t23)
-    s12 = sin(t12)
-    s13 = sin(t13)
-    s23 = sin(t23)
-    v = np.array([[c12*c13,
-        c13*s12,
-        s13/exp(1j*delta)],
-        [-(c23*s12) - c12*exp(1j*delta)*s13*s23,
-        c12*c23 - exp(1j*delta)*s12*s13*s23,
-        c13*s23],
-        [-(c12*c23*exp(1j*delta)*s13) + s12*s23,
-        -(c23*exp(1j*delta)*s12*s13) - c12*s23,
-        c13*c23]])
-    if len(v.shape) > 2:
-        v = np.moveaxis(v, [0,1],[-2,-1])
-    return v
+    return _ckm_standard(np, t12, t13, t23, delta)
+
 
 def gamma_to_delta(t12, t13, t23, gamma, delta_expansion_order=None):
     r"""CKM phase $\delta$ in terms of $\gamma$.
@@ -69,22 +69,8 @@ def gamma_to_delta(t12, t13, t23, gamma, delta_expansion_order=None):
     -------
     - `delta`: CKM phase $\delta$ in radians
     """
-    if delta_expansion_order == 0:
-        delta = gamma
-    else:
-        s13 = sin(t13)
-        tan12 = tan(t12)
-        tan23 = tan(t23)
-        k = s13 * tan23 / tan12
-        if delta_expansion_order == 1:
-            delta = gamma + k * sin(gamma)
-        elif delta_expansion_order == 2:
-            delta = gamma + k * sin(gamma) + 1/6 * k**3 * sin(gamma)**3
-        elif delta_expansion_order is None:
-            delta = arctan((1 - k**2)/(1/tan(gamma) - k * sqrt(1/sin(gamma)**2 - k**2)))
-        else:
-            raise ValueError('delta_expansion_order must be 0, 1, 2, or None.')
-    return delta.real
+    return _gamma_to_delta(np, t12, t13, t23, gamma, delta_expansion_order)
+
 
 def beta_gamma_to_delta(beta, gamma, t23, delta_expansion_order=None):
     r"""CKM phase $\delta$ in terms of $\beta$ and $\gamma$.
@@ -116,22 +102,8 @@ def beta_gamma_to_delta(beta, gamma, t23, delta_expansion_order=None):
     -------
     - `delta`: CKM phase $\delta$ in radians
     """
-    if delta_expansion_order == 0:
-        delta = gamma
-    else:
-        s23 = sin(t23)
-        Rb = sin(beta) / sin(beta + gamma)
-        rhobar = Rb * cos(gamma)
-        etabar = Rb * sin(gamma)
-        if delta_expansion_order == 1:
-            delta = gamma + s23**2 * etabar
-        elif delta_expansion_order == 2:
-            delta = gamma + s23**2 * etabar + s23**4 * rhobar * etabar
-        elif delta_expansion_order is None:
-            delta = arctan(1/(1/tan(gamma) - s23**2 * Rb**2 / etabar ))
-        else:
-            raise ValueError('delta_expansion_order must be 0, 1, 2, or None.')
-    return delta.real
+    return _beta_gamma_to_delta(np, beta, gamma, t23, delta_expansion_order)
+
 
 def tree_to_standard(Vus, Vub, Vcb, gamma, delta_expansion_order=None):
     r"""Function to convert from the CKM matrix in the tree parametrization to
@@ -162,15 +134,8 @@ def tree_to_standard(Vus, Vub, Vcb, gamma, delta_expansion_order=None):
     - `t23`: CKM angle $\theta_{23}$ in radians
     - `delta`: CKM phase $\delta$ in radians
     """
-    s13 = Vub
-    c13 = sqrt(1 - s13**2)
-    s12 = Vus/c13
-    s23 = Vcb/c13
-    t13 = arcsin(s13)
-    t12 = arcsin(s12)
-    t23 = arcsin(s23)
-    delta = gamma_to_delta(t12, t13, t23, gamma, delta_expansion_order)
-    return t12.real, t13.real, t23.real, delta
+    return _tree_to_standard(np, Vus, Vub, Vcb, gamma, delta_expansion_order)
+
 
 def standard_to_tree(t12, t13, t23, delta):
     r"""Function to convert from the CKM matrix in the standard parametrization
@@ -190,18 +155,8 @@ def standard_to_tree(t12, t13, t23, delta):
     - `Vcb`: CKM matrix element $V_{cb}$
     - `gamma`: Unitarity Triangle angle $\gamma$ in radians
     """
-    s12 = sin(t12)
-    s13 = sin(t13)
-    s23 = sin(t23)
-    c12 = cos(t12)
-    c13 = cos(t13)
-    c23 = cos(t23)
-    Vus = s12 * c13
-    Vub = s13
-    Vcb = s23 * c13
-    Vcd_complex = - s12*c23 - c12*s23*s13 * exp(1j*delta)
-    gamma = phase(-exp(1j*delta)/Vcd_complex)
-    return Vus.real, Vub.real, Vcb.real, gamma
+    return _standard_to_tree(np, t12, t13, t23, delta)
+
 
 def beta_gamma_to_standard(Vus, Vcb, beta, gamma, delta_expansion_order=None):
     r"""Function to convert from the CKM matrix in the beta-gamma parametrization
@@ -232,23 +187,8 @@ def beta_gamma_to_standard(Vus, Vcb, beta, gamma, delta_expansion_order=None):
     - `t23`: CKM angle $\theta_{23}$ in radians
     - `delta`: CKM phase $\delta$ in radians
     """
-    Rb = sin(beta) / sin(beta + gamma)
-    rhobar = Rb * cos(gamma)
-    a = Vcb**2 * Vus**2 * (1 - Vcb**2) * Rb**2
-    b = 1 - Vus**2 - Vcb**2 * (2 * rhobar * (1 - Vus**2) - Vcb**2 * Rb**2)
-    c = 2 - Vus**2 - 2 * Vcb**2 * rhobar
-    p = (3*b + c**2)/9
-    q = (27*a + 9*b*c + 2*c**3)/54
-    t = 2*sqrt(p)*sin(arcsin(p**(-3/2)*q)/3)
-    s13 = sqrt(t - c/3)
-    c13 = sqrt(1 - s13**2)
-    s12 = Vus/c13
-    s23 = Vcb/c13
-    t13 = arcsin(s13)
-    t12 = arcsin(s12)
-    t23 = arcsin(s23)
-    delta = beta_gamma_to_delta(beta, gamma, t23, delta_expansion_order)
-    return t12.real, t13.real, t23.real, delta
+    return _beta_gamma_to_standard(np, Vus, Vcb, beta, gamma, delta_expansion_order)
+
 
 def standard_to_beta_gamma(t12, t13, t23, delta):
     r"""Function to convert from the CKM matrix in the standard parametrization
@@ -268,19 +208,8 @@ def standard_to_beta_gamma(t12, t13, t23, delta):
     - `beta`: Unitarity Triangle angle $\beta$ in radians
     - `gamma`: Unitarity Triangle angle $\gamma$ in radians
     """
-    s12 = sin(t12)
-    s13 = sin(t13)
-    s23 = sin(t23)
-    c12 = cos(t12)
-    c13 = cos(t13)
-    c23 = cos(t23)
-    Vus = s12 * c13
-    Vcb = s23 * c13
-    Vcd_complex = - s12*c23 - c12*s23*s13 * exp(1j*delta)
-    Vtd_complex = s12*s23 - c12*c23*s13 * exp(1j*delta)
-    beta = phase(-Vcd_complex/Vtd_complex)
-    gamma = phase(-exp(1j*delta)/Vcd_complex)
-    return Vus.real, Vcb.real, beta, gamma
+    return _standard_to_beta_gamma(np, t12, t13, t23, delta)
+
 
 def wolfenstein_to_standard(laC, A, rhobar, etabar):
     r"""Function to convert from the CKM matrix in the Wolfenstein parametrization
@@ -321,15 +250,8 @@ def wolfenstein_to_standard(laC, A, rhobar, etabar):
     - $\rho \approx \bar\rho/(1-\lambda^2/2)$
     - $\eta \approx \bar\eta/(1-\lambda^2/2)$
     """
-    rho_plus_i_eta = sqrt(1-A**2*laC**4)*(rhobar + 1j*etabar)/(sqrt(1-laC**2)*(1 - A**2*laC**4*(rhobar + 1j*etabar))) # e.g. Eq. (93) in arXiv:2206.07501
-    s12 = laC
-    s23 = A*laC**2
-    s13 = A*laC**3*np.abs(rho_plus_i_eta)
-    delta = phase(rho_plus_i_eta)
-    t12 = arcsin(s12)
-    t13 = arcsin(s13)
-    t23 = arcsin(s23)
-    return t12.real, t13.real, t23.real, delta
+    return _wolfenstein_to_standard(np, laC, A, rhobar, etabar)
+
 
 def standard_to_wolfenstein(t12, t13, t23, delta):
     r"""Function to convert from the CKM matrix in the standard parametrization
@@ -370,13 +292,8 @@ def standard_to_wolfenstein(t12, t13, t23, delta):
     - $\rho \approx \bar\rho/(1-\lambda^2/2)$
     - $\eta \approx \bar\eta/(1-\lambda^2/2)$
     """
-    laC = sin(t12)
-    A = sin(t23)/laC**2
-    rho_plus_i_eta = sin(t13) * exp(1j*delta) / (A*laC**3)
-    rhobar_plus_i_etabar = sqrt(1-laC**2)*rho_plus_i_eta/(sqrt(1-A**2*laC**4)+sqrt(1-laC**2)*A**2*laC**4*rho_plus_i_eta) # e.g. Eq. (92) in arXiv:2206.07501
-    rhobar = rhobar_plus_i_etabar.real
-    etabar = rhobar_plus_i_etabar.imag
-    return laC.real, A.real, rhobar, etabar
+    return _standard_to_wolfenstein(np, t12, t13, t23, delta)
+
 
 def tree_to_wolfenstein(Vus, Vub, Vcb, gamma, delta_expansion_order=None):
     r"""Function to convert from the CKM matrix in the tree parametrization to
@@ -428,8 +345,8 @@ def tree_to_wolfenstein(Vus, Vub, Vcb, gamma, delta_expansion_order=None):
     - $\rho \approx \bar\rho/(1-\lambda^2/2)$
     - $\eta \approx \bar\eta/(1-\lambda^2/2)$
     """
-    t12, t13, t23, delta = tree_to_standard(Vus, Vub, Vcb, gamma, delta_expansion_order)
-    return standard_to_wolfenstein(t12, t13, t23, delta)
+    return _tree_to_wolfenstein(np, Vus, Vub, Vcb, gamma, delta_expansion_order)
+
 
 def wolfenstein_to_tree(laC, A, rhobar, etabar):
     r"""Function to convert from the CKM matrix in the Wolfenstein parametrization
@@ -469,8 +386,8 @@ def wolfenstein_to_tree(laC, A, rhobar, etabar):
     - $\rho \approx \bar\rho/(1-\lambda^2/2)$
     - $\eta \approx \bar\eta/(1-\lambda^2/2)$
     """
-    t12, t13, t23, delta = wolfenstein_to_standard(laC, A, rhobar, etabar)
-    return standard_to_tree(t12, t13, t23, delta)
+    return _wolfenstein_to_tree(np, laC, A, rhobar, etabar)
+
 
 def ckm_wolfenstein(laC, A, rhobar, etabar):
     r"""CKM matrix in the Wolfenstein parametrization and standard phase
@@ -508,8 +425,8 @@ def ckm_wolfenstein(laC, A, rhobar, etabar):
     - `v`: CKM matrix in the Wolfenstein parametrization and standard phase
         convention
     """
-    t12, t13, t23, delta = wolfenstein_to_standard(laC, A, rhobar, etabar)
-    return ckm_standard(t12, t13, t23, delta)
+    return _ckm_wolfenstein(np, laC, A, rhobar, etabar)
+
 
 def ckm_tree(Vus, Vub, Vcb, gamma, delta_expansion_order=None):
     r"""CKM matrix in the tree parametrization and standard phase
@@ -553,8 +470,8 @@ def ckm_tree(Vus, Vub, Vcb, gamma, delta_expansion_order=None):
     -------
     - `v`: CKM matrix in the tree parametrization and standard phase
     """
-    t12, t13, t23, delta = tree_to_standard(Vus, Vub, Vcb, gamma, delta_expansion_order)
-    return ckm_standard(t12, t13, t23, delta)
+    return _ckm_tree(np, Vus, Vub, Vcb, gamma, delta_expansion_order)
+
 
 def ckm_beta_gamma(Vus, Vcb, beta, gamma, delta_expansion_order=None):
     r"""CKM matrix in the beta-gamma parametrization and standard phase
@@ -591,5 +508,4 @@ def ckm_beta_gamma(Vus, Vcb, beta, gamma, delta_expansion_order=None):
     -------
     - `v`: CKM matrix in the beta-gamma parametrization and standard phase
     """
-    t12, t13, t23, delta = beta_gamma_to_standard(Vus, Vcb, beta, gamma, delta_expansion_order)
-    return ckm_standard(t12, t13, t23, delta)
+    return _ckm_beta_gamma(np, Vus, Vcb, beta, gamma, delta_expansion_order)

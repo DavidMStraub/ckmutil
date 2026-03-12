@@ -3,6 +3,7 @@ from math import radians,asin,degrees
 import cmath
 from ckmutil.ckm import *
 import numpy as np
+from numpy import sqrt
 
 # some values close to the real ones
 Vus = 0.22
