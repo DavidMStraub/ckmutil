@@ -5,8 +5,8 @@ Each function accepts ``xp`` as its first argument, which should be either
 backends without duplication.
 
 The public API in ``ckmutil.ckm`` calls these with ``xp=numpy``; the JAX API
-in ``ckmutil.jax`` calls them with ``xp=jax.numpy`` and wraps them with
-``jax.jit``.
+in ``ckmutil.jax`` calls them with ``xp=jax.numpy`` and leaves any
+``jax.jit`` compilation to the caller.
 """
 
 
