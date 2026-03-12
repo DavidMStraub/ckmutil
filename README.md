@@ -8,7 +8,7 @@ A package containing useful functions to deal with the Cabibbo-Kobayashi-Maskawa
 
 All functions in `ckmutil.ckm` and `msvd` from `ckmutil.diag` are available as JAX-compatible versions in `ckmutil.jax`:
 
-```python
+```bash
 pip install ckmutil[jax]
 ```
 
